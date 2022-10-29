@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Kari</title>
+    <link rel="stylesheet" type="text/css" href="../stylesheets/style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/js/bootstrap.bundle.min.js"></script>
+</head>
+<body>
+
+<div id="headbar" class="container center">
+    <div class="row center">
+        <p id="headText" class="center"><b>Bahn</b></p>
+    </div>
+</div>
+
+<div id="register">
+    <label for="passwort">Passwort:</label>
+    <input id="passwort" size="10">
+    <button id="pwd_btn">Anmelden</button>
+</div>
+
+<div id="appcontent" hidden class="container">
+    <div class="row">
+        <b>Wk-Nr.: &nbsp;</b>
+        <div id="wk"></div>
+    </div>
+
+    <div class="row">
+        <b>Wk-Name: &nbsp;</b>
+        <div id="wkName"></div>
+    </div>
+
+    <div class="row">
+        <b>Lauf: &nbsp;</b>
+        <div id="lauf"></div>
+    </div>
+
+    <div class="row">
+        <b>Schwimmer/in:&nbsp;</b>
+        <div id="schwimmer"></div>
+    </div>
+
+    <div class="row">
+        <b>Zeit:&nbsp;</b>
+        <input type="text" id="min" placeholder="00" maxlength="2" size="2"> :
+        <input type="text" id="sek" placeholder="00" maxlength="2" size="2">,
+        <input type="text" id="mil" placeholder="00" maxlength="2" size="2">
+    </div>
+    <div>
+        <p id="errorLog" style="color: red"></p>
+    </div>
+    <div class="center">
+        <button id="submitBtn">Abschicken</button>
+    </div>
+
+    <ul id="zzList">
+
+    </ul>
+    <div class="center">
+        <button id="zzBtn">neue Zwischenzeit</button>
+    </div>
+
+</div>
+</body>
+<script src="/socket.io/socket.io.js"></script>
+<script src="../javascripts/zeitNehmer.js"></script>
+</html>

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<!-- HTML5 file upload selector-->
+<input type="file" id="file">
+
+<br>
+
+<label for="wk_name">WK Name</label>
+<input type="text" id="wk_name">
+
+<br>
+<br>
+
+<label for="wk_pwd">WK Passwort</label>
+<input type="password" id="wk_pwd">
+
+<br>
+<br>
+
+<button id="submit">Abschicken</button>
+<p id="result"></p>
+</body>
+
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    var socket = io('/admin');
+    let fileInput = document.getElementById('file')
+    let result = document.getElementById('result')
+    document.getElementById('submit').addEventListener('click', () => {
+        let file = fileInput.files[fileInput.files.length - 1];
+        let reader = new FileReader();
+        let wk_name = document.getElementById('wk_name').value
+        let pwd = document.getElementById('wk_pwd').value
+
+        socket.emit('neuerWettkampf', JSON.stringify({wk_name: wk_name, password: pwd}),(msg)=>{
+
+        })
+
+        reader.addEventListener('load', function (e) {
+            let text = e.target.result;
+            var lines = text.split(/[\r\n]+/g);
+            for (let i = 0; i < lines.length; i++) {
+                socket.emit('neuerStart', JSON.stringify({wettkampf: wk_name, start: lines[i]}))
+                console.log('Start gesendet')
+                if (i === lines.length - 1) {
+                    socket.emit('uploaded', wk_name)
+                }
+            }
+        });
+        reader.readAsText(file);
+
+    })
+
+    socket.on('success', (msg) => {
+        result.innerText = 'successful'
+    })
+    socket.on('error', (msg) => {
+        result.innerText = 'error: ' + msg
+    })
+
+
+</script>
+</html>
