@@ -9,11 +9,13 @@
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/js/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 </head>
 <body>
 
-<div id="headbar" class="container center">
-    <div class="row center">
+
+<div id="headbar" class="container">
+    <div class="row">
         <p id="headText" class="center"><b>Bahn</b></p>
     </div>
 </div>
@@ -24,27 +26,37 @@
     <button id="pwd_btn">Anmelden</button>
 </div>
 
+<div id="navigation" class="container" hidden>
+    <div class="row">
+        <button id="current" class="secondary-btn button">aktiver Lauf</button>
+        <button id="structureBtn" class="secondary-btn button">Lauf wählen</button>
+        <button id="disqualify" class="secondary-btn button">Disqualifizieren</button>
+    </div>
+</div>
+
 <div id="appcontent" hidden class="container">
-    <div class="row">
-        <b>Wk-Nr.: &nbsp;</b>
-        <div id="wk"></div>
-    </div>
+    <div>
 
-    <div class="row">
-        <b>Wk-Name: &nbsp;</b>
-        <div id="wkName"></div>
-    </div>
+        <div class="row">
+            <b>Wk-Nr.: &nbsp;</b>
+            <div id="wk"></div>
+        </div>
 
-    <div class="row">
-        <b>Lauf: &nbsp;</b>
-        <div id="lauf"></div>
-    </div>
+        <div class="row">
+            <b>Wk-Name: &nbsp;</b>
+            <div id="wkName"></div>
+        </div>
 
-    <div class="row">
-        <b>Schwimmer/in:&nbsp;</b>
-        <div id="schwimmer"></div>
-    </div>
+        <div class="row">
+            <b>Lauf: &nbsp;</b>
+            <div id="lauf"></div>
+        </div>
 
+        <div class="row">
+            <b>Schwimmer/in:&nbsp;</b>
+            <div id="schwimmer"></div>
+        </div>
+    </div>
     <div class="row">
         <b>Zeit:&nbsp;</b>
         <input type="text" id="min" placeholder="00" maxlength="2" size="2"> :
@@ -54,18 +66,40 @@
     <div>
         <p id="errorLog" style="color: red"></p>
     </div>
+
+    <div class="row">
+        <b>Unterschrift:&nbsp;</b>
+        <input type="password" id="signature" maxlength="4" size="4">
+
+    </div>
+
     <div class="center">
-        <button id="submitBtn">Abschicken</button>
+        <button id="submitBtn" class="button">Abschicken</button>
     </div>
 
     <ul id="zzList">
 
     </ul>
     <div class="center">
-        <button id="zzBtn">neue Zwischenzeit</button>
+        <button id="zzBtn" class="button">neue Zwischenzeit</button>
     </div>
-
 </div>
+
+<div id="structure" class="container" hidden>
+    <div class="row">Wettkampf: <select id="wk_select">
+        <option></option>
+    </select>
+    </div>
+    <div class="row">
+        Lauf: <select id="lauf_select">
+        <option></option>
+    </select>
+    </div>
+    <div class="row">
+        <button id="selectLaufBtn" class="button">Abschicken</button>
+    </div>
+</div>
+
 </body>
 <script src="/socket.io/socket.io.js"></script>
 <script src="../javascripts/zeitNehmer.js"></script>

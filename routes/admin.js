@@ -16,4 +16,8 @@ router.all('/out', function(req, res) {
     res.render(path.join(__dirname, "../public/views/zeitNehmer.html"));
 });
 
+router.all('/clubmeisterschaft', function(req, res) {
+    res.render(path.join(__dirname, "../public/views/clubmeisterschaft.html"));
+});
+
 module.exports = router;

@@ -1,5 +1,9 @@
 body {
   font: 30px Calibri, sans-serif;
+  width: 100%;
+  overflow: hidden;
+  padding-left: 10px;
+  padding-right: 10px;
 }
 
 a {
@@ -7,14 +11,15 @@ a {
 }
 
 #headbar{
-  background: #1334af;
+  background: #2c4ab9;
   color: white;
-  box-sizing:inherit;
   font-size: xx-large;
   font-weight: 600;
-  padding: 10px;
+  padding: 10px ;
+  border-radius: 0 0 15px 15px;
   margin-bottom: 10px;
 }
+
 
 .center{
   text-align: center;
@@ -24,4 +29,37 @@ a {
 
 .row{
   margin: 5px;
+}
+
+.box {
+  border-style: solid;
+  border-width: 7px;
+  border-color: #2c4ab9;
+  border-radius: 15px;
+  margin-top: 10px;
+  padding: 10px;
+
+}
+
+.button {
+  background-color: #2c4ab9;
+  border: none;
+  color: white;
+  padding: 10px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  margin: 4px 2px;
+  border-radius: 15px;
+}
+
+.secondary-btn{
+  background-color: #ED8A21;
+  padding-top: 5px;
+  padding-bottom: 5px;
+}
+
+#appcontent{
+  overflow: auto
 }
