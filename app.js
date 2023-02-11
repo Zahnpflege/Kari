@@ -3,6 +3,7 @@ let path = require('path')
 let lanes = require("./routes/lanes.js")
 let admin = require("./routes/admin.js")
 let Wettkampf = require('./modules/wettkampf.js')
+let htmlCreator = require('./modules/createHTML.js')
 var app = express();
 let mustache = require('mustache-express')
 const http = require('http');
@@ -37,12 +38,12 @@ function sendNext(socket) {
     }
 }
 
-function sendError(socket, error){
+function sendError(socket, error) {
     console.log('sending Error: ' + error)
     socket.emit('error', error)
 }
 
-function sendStart(socket, start){
+function sendStart(socket, start) {
     start = JSON.stringify(start)
     console.log('sending start: ' + start)
     socket.emit('selectedStart', start)
@@ -87,10 +88,10 @@ io.on('connection', (socket) => {
         let data = JSON.parse(msg)
         if (socketData[socket.id]) {
             let result = wettkampfDaten[socketData[socket.id].wettkampf].addTime(data['data'], data['signature'])
-            if(result === 1){
+            if (result === 1) {
                 sendNext(socket)
                 handleData(msg, socketData[socket.id].wettkampf)
-            }else{
+            } else {
                 sendError(socket, result)
             }
         } else {
@@ -98,14 +99,14 @@ io.on('connection', (socket) => {
         }
     });
 
-    socket.on('selectLauf',(msg)=>{
-        log('[INFO] Got selectLauf: '+ msg)
+    socket.on('selectLauf', (msg) => {
+        log('[INFO] Got selectLauf: ' + msg)
         let data = JSON.parse(msg)
-        let start = wettkampfDaten[socketData[socket.id].wettkampf].getStart(socketData[socket.id].bahn,data['wk'],data['lauf'])
+        let start = wettkampfDaten[socketData[socket.id].wettkampf].getStart(socketData[socket.id].bahn, data['wk'], data['lauf'])
         sendStart(socket, start)
     })
 
-    socket.on('nextLauf', (msg)=>{
+    socket.on('nextLauf', (msg) => {
         sendNext(socket)
     })
 });
@@ -121,7 +122,7 @@ io.of("/admin").on("connection", function (socket) {
         if (data['wk_name'] === undefined) {
             return false
         }
-        wettkampfDaten[data['wk_name']] = new Wettkampf(data['wk_name'], data['password'], {}, {}, {})
+        wettkampfDaten[data['wk_name']] = new Wettkampf(data['wk_name'], data['password'], {}, {}, {}, {})
     })
 
     socket.on('neuerStart', (message) => {
@@ -153,14 +154,9 @@ function loadBackup() {
 
     for (let name in backup_data) {
         data = backup_data[name]
-        backup[name] = new Wettkampf(data['name'], data['password'], data['data'], data['current'], data['structure'])
+        backup[name] = new Wettkampf(data['name'], data['password'], data['data'], data['current'], data['structure'], data['wkStats'])
     }
     return backup
-}
-
-
-function getRadioButton(name, value) {
-    return '<input type="radio" id="' + value + '" name="' + name + '" value="' + value + '"><label for="' + value + '">' + value + '</label><br>'
 }
 
 function log(message) {
@@ -169,12 +165,52 @@ function log(message) {
 
 app.all('/', (req, res) => {
     let data = {}
-    for(let wettkampf in wettkampfDaten){
+    for (let wettkampf in wettkampfDaten) {
         data[wettkampf] = Object.keys(wettkampfDaten[wettkampf].data)
     }
-    res.render(path.join(__dirname, "./public/views/anmelde.html"), {structure:JSON.stringify(data)});
+    res.render(path.join(__dirname, "./public/views/anmelde.html"), {structure: JSON.stringify(data)});
 
 })
+
+app.all('/out', function (req, res) {
+    let params = req.query
+
+    if (!params.wettkampf) {
+        let wettkampfe = Object.keys(wettkampfDaten)
+        res.render(path.join(__dirname, "./public/views/admin_output.html"), {
+            appcontent: htmlCreator.createWettkampfSelectButtons(wettkampfe),
+            'headbar': 'Wettkampf Auswahl'
+        });
+    }
+    if (params.wettkampf in wettkampfDaten) {
+        if (params.wettkampf && !params.wk) {
+            let wkStats = wettkampfDaten[params.wettkampf].wkStats
+            res.render(path.join(__dirname, "./public/views/admin_output.html"), {
+                appcontent: htmlCreator.createWkSelectButtons(params.wettkampf, wkStats),
+                'headbar': params.wettkampf
+            });
+        }
+        if (params.wettkampf && params.wk) {
+            let wkData = wettkampfDaten[params.wettkampf].getWkNachLauf(params.wk)
+            res.render(path.join(__dirname, "./public/views/admin_output.html"), {
+                appcontent: htmlCreator.createWkZeiten(wkData),
+                'headbar': params.wettkampf + ' Wk:' + params.wk
+            });
+        }
+    }
+});
+
+app.get('/download', function (req, res) {
+    fs.writeFile('./Temp/' + req.query.wettkampf + '.json', wettkampfDaten[req.query.wettkampf].createFileContent(), (err) => {
+    }, () => {
+        res.download('./Temp/' + req.query.wettkampf + '.json', () => {
+            fs.unlink('./Temp/' + req.query.wettkampf + '.json',()=>{})
+        })
+
+    })
+
+})
+
 
 server.listen(port, '0.0.0.0', () => {
     console.log('listening on: ' + port);

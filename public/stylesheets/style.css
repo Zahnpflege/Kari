@@ -1,7 +1,7 @@
 body {
   font: 30px Calibri, sans-serif;
   width: 100%;
-  overflow: hidden;
+  height: 100vh;
   padding-left: 10px;
   padding-right: 10px;
 }
@@ -61,5 +61,5 @@ a {
 }
 
 #appcontent{
-  overflow: auto
+  overflow: scroll;
 }

@@ -13,7 +13,7 @@ router.all('/in', function(req, res) {
 });
 
 router.all('/out', function(req, res) {
-    res.render(path.join(__dirname, "../public/views/zeitNehmer.html"));
+    res.render(path.join(__dirname, "../public/views/admin_output.html"));
 });
 
 router.all('/clubmeisterschaft', function(req, res) {

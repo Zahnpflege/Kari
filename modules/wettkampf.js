@@ -4,13 +4,15 @@ class Wettkampf {
     password = undefined
     current = {}
     structure = {}
+    wkStats = {}
 
-    constructor(name, password, data, current, structure) {
+    constructor(name, password, data, current, structure, wkStats) {
         this.name = name
         this.password = password
         this.data = data
         this.current = current
         this.structure = structure
+        this.wkStats = wkStats
     }
 
     addStart(data_json) {
@@ -24,6 +26,11 @@ class Wettkampf {
             this.current[bahn] = 0
             this.structure[bahn] = {}
         }
+
+        if(!this.wkStats[wk]){
+            this.wkStats[wk] = {'name': data['WK_Titel'], 'nr': wk}
+        }
+
         if (this.structure[bahn][wk] === undefined) {
             this.structure[bahn][wk] = []
         }
@@ -95,6 +102,36 @@ class Wettkampf {
             return this.structure[bahn]
         }
         return false
+    }
+
+    getWkNachLauf(wk){
+        let res = {}
+        for(let bahn in this.data) {
+            for (let i in this.data[bahn]) {
+                let start = this.data[bahn][i]['data']
+
+
+                if (start['WK_Nr'] === wk) {
+
+                    if (!res[start['Lauf']]) {
+                        res[start['Lauf']] = []
+                    }
+                    res[start['Lauf']][bahn] = start
+                }
+            }
+        }
+        return res
+    }
+
+    createFileContent(){
+        let res = ''
+        for(let bahn in this.data) {
+            for (let i in this.data[bahn]) {
+                let start = this.data[bahn][i]['data']
+                res += JSON.stringify(start) + "\n"
+            }
+        }
+        return res
     }
 
 }
