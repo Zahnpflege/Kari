@@ -11,7 +11,7 @@ const server = http.createServer(app);
 const {Server} = require("socket.io");
 const io = new Server(server);
 const fs = require('fs');
-var port = 80;
+var port = 3001;
 
 app.engine('html', mustache());
 app.use(express.static(path.join(__dirname, 'public'), {index: 'login.html'}))
