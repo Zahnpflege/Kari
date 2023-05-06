@@ -18,7 +18,7 @@ class Wettkampf {
     addStart(data_json) {
         let data = JSON.parse(data_json)
         let lauf = data['Lauf']
-        let wk = data['WK_Nr']
+        let wk = data['WK_alpha']
         let bahn = data['Bahn']
 
         if (this.data[bahn] === undefined) {

@@ -35,6 +35,10 @@ class HTMLCreator{
 
         return res
     }
+
+    static disqualy(){
+
+    }
 }
 
 module.exports = HTMLCreator

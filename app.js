@@ -113,7 +113,11 @@ io.on('connection', (socket) => {
 
 function handleData(msg, wettkampf) {
     fs.writeFileSync(path.join(__dirname, 'Backup.json'), JSON.stringify(wettkampfDaten))
-    fs.writeFileSync(path.join(__dirname, 'Zeiten') + '\\' + wettkampf + '.json', msg + "\n", {flag: 'a+'})
+    let msg_data = JSON.parse(msg)['data']
+    if ('WK_Nr' in msg_data){
+        log('added Message to Times: '+ msg)
+        fs.writeFileSync(path.join(__dirname, 'Zeiten') + '\\' + wettkampf + '\\' + msg_data['WK_Nr'] + '.json', JSON.stringify(msg_data) + "\n", {flag: 'a+'})
+    }
 }
 
 io.of("/admin").on("connection", function (socket) {
@@ -142,6 +146,9 @@ io.of("/admin").on("connection", function (socket) {
     })
     socket.on('uploaded', (message) => {
         console.log(message + ' hochgeladen')
+        if (!fs.existsSync(path.join(__dirname, 'Zeiten') + '\\' + message)) {
+            fs.mkdirSync(path.join(__dirname, 'Zeiten') + '\\' + message);
+        }
         fs.writeFileSync(path.join(__dirname, 'Backup.json'), JSON.stringify(wettkampfDaten))
         socket.emit("success", '')
     })
@@ -211,6 +218,9 @@ app.get('/download', function (req, res) {
 
 })
 
+app.get('/disqualify', function (req,res){
+    res.render(path.join(__dirname, "./public/views/disqualy.html"),{});
+})
 
 server.listen(port, '0.0.0.0', () => {
     console.log('listening on: ' + port);
