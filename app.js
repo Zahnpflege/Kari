@@ -117,6 +117,7 @@ function handleData(msg, wettkampf) {
     if ('WK_Nr' in msg_data){
         log('added Message to Times: '+ msg)
         fs.writeFileSync(path.join(__dirname, 'Zeiten') + '\\' + wettkampf + '\\' + msg_data['WK_Nr'] + '.json', JSON.stringify(msg_data) + "\n", {flag: 'a+'})
+        console.log(path.join(__dirname, 'Zeiten') + '\\' + wettkampf + '\\' + msg_data['WK_Nr'] + '.json')
     }
 }
 
