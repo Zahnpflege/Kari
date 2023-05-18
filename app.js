@@ -221,7 +221,35 @@ app.get('/download', function (req, res) {
 app.get('/wettkampf/:wettkampf/:wk_nr', function (req,res){
     var wettkampf = req.params['wettkampf']
     var wk_nr = req.params['wk_nr']
-    res.send('Zoe raucht '+ wettkampf + wk_nr)
+    if(wettkampf in wettkampfDaten){
+        fs.readFile('./Zeiten/'+wettkampf+'/'+ wk_nr + '.json',  (err, data) => {
+            if (!err && data) {
+                res.writeHead(200, {'Content-Type': 'text/plain'});
+                res.write(data)
+                res.end()
+            }else{
+                res.send('Wettkampfnummer "'+ wk_nr+ '" ungültig')
+            }
+        });
+    }else{
+        res.send('Wettkampf "' + wettkampf + '" existiert nicht')
+    }
+} )
+
+app.get('/wettkampfDownload/:wettkampf/:wk_nr', function (req,res){
+    var wettkampf = req.params['wettkampf']
+    var wk_nr = req.params['wk_nr']
+    if(wettkampf in wettkampfDaten){
+        fs.readFile('./Zeiten/'+wettkampf+'/'+ wk_nr + '.json',  (err, data) => {
+            if (!err && data) {
+                res.send(data)
+            }else{
+                res.send('Wettkampfnummer "'+ wk_nr+ '" ungültig')
+            }
+        });
+    }else{
+        res.send('Wettkampf "' + wettkampf + '" existiert nicht')
+    }
 } )
 
 app.get('/disqualify', function (req,res){
