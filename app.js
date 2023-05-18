@@ -147,8 +147,8 @@ io.of("/admin").on("connection", function (socket) {
     })
     socket.on('uploaded', (message) => {
         console.log(message + ' hochgeladen')
-        if (!fs.existsSync(path.join(__dirname, 'Zeiten') + '\\' + message)) {
-            fs.mkdirSync(path.join(__dirname, 'Zeiten') + '\\' + message);
+        if (!fs.existsSync(path.join(__dirname, 'Zeiten') + '/' + message)) {
+            fs.mkdirSync(path.join(__dirname, 'Zeiten') + '/' + message);
         }
         fs.writeFileSync(path.join(__dirname, 'Backup.json'), JSON.stringify(wettkampfDaten))
         socket.emit("success", '')
