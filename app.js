@@ -243,7 +243,7 @@ app.get('/wettkampfDownload/:wettkampf/:wk_nr', function (req,res){
     if(wettkampf in wettkampfDaten){
         fs.readFile(path.join(__dirname,'/Zeiten/'+wettkampf+'/'+ wk_nr + '.json'),  (err, data) => {
             if (!err && data) {
-                res.send(data)
+                res.download(path.join(__dirname,'/Zeiten/'+wettkampf+'/'+ wk_nr + '.json'))
             }else{
                 res.send('Wettkampfnummer "'+ wk_nr+ '" ungültig')
             }
