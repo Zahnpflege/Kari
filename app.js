@@ -218,9 +218,19 @@ app.get('/download', function (req, res) {
 
 })
 
+app.get('/wettkampf/:wettkampf/:wk_nr', function (req,res){
+    var wettkampf = req.params['wettkampf']
+    var wk_nr = req.params['wk_nr']
+    res.send('Zoe raucht '+ wettkampf + wk_nr)
+} )
+
 app.get('/disqualify', function (req,res){
     res.render(path.join(__dirname, "./public/views/disqualy.html"),{});
 })
+app.get('/zoe', function (req,res){
+    res.send('Zoe raucht')
+})
+
 
 server.listen(port, '0.0.0.0', () => {
     console.log('listening on: ' + port);
