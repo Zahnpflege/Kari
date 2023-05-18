@@ -250,7 +250,7 @@ app.get('/wettkampfDownload/:wettkampf/:wk_nr', function (req,res){
     }else{
         res.send('Wettkampf "' + wettkampf + '" existiert nicht')
     }
-} )
+})
 
 app.get('/disqualify', function (req,res){
     res.render(path.join(__dirname, "./public/views/disqualy.html"),{});
