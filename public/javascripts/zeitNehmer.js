@@ -104,11 +104,17 @@ function changeDisplayedData(data) {
     wkName.innerText = data['WK_Titel']
     lauf.innerText = data['Lauf']
     schwimmer.innerText = data['Aktiver']
-
     zzList.innerHTML = ''
-    min.value = ''
-    sek.value = ''
-    mil.value = ''
+    if(data['Endzeit']=== ''){
+        min.value = ''
+        sek.value = ''
+        mil.value = ''
+    }else{
+        min.value = data['Endzeit'].substring(0,2)
+        sek.value = data['Endzeit'].substring(3,5)
+        mil.value = data['Endzeit'].substring(6,8)
+    }
+
 
     createZZ(data['WK_Titel'])
 }
