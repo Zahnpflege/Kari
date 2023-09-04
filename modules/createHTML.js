@@ -28,7 +28,7 @@ class HTMLCreator{
             res += `<h><b> Lauf: ${lauf}</b></h>`
             for(let i in zeitData[lauf]){
                 let start = zeitData[lauf][i]
-                res += `<div> Bahn ${start['Bahn']} ${start['Endzeit']} ${start['Aktiver']} </div>`
+                res += `<div> Bahn ${start['Bahn']} -- ${start['Endzeit']} -- ${start['Aktiver']} </div>`
             }
             res+= '<hr>'
         }

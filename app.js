@@ -180,6 +180,7 @@ app.all('/', (req, res) => {
 
 })
 
+// path for wk overview to return results. If wettkampf and wk are set, results are displayed
 app.all('/out', function (req, res) {
     let params = req.query
 
@@ -193,6 +194,7 @@ app.all('/out', function (req, res) {
     if (params.wettkampf in wettkampfDaten) {
         if (params.wettkampf && !params.wk) {
             let wkStats = wettkampfDaten[params.wettkampf].wkStats
+            console.log(wkStats)
             res.render(path.join(__dirname, "./public/views/admin_output.html"), {
                 appcontent: htmlCreator.createWkSelectButtons(params.wettkampf, wkStats),
                 'headbar': params.wettkampf
@@ -222,6 +224,7 @@ app.get('/download', function (req, res) {
 app.get('/wettkampf/:wettkampf/:wk_nr', function (req,res){
     var wettkampf = req.params['wettkampf']
     var wk_nr = req.params['wk_nr']
+    console.log(wettkampfDaten)
     if(wettkampf in wettkampfDaten){
         fs.readFile(path.join(__dirname,'/Zeiten/'+wettkampf+'/'+ wk_nr + '.json'),  (err, data) => {
             if (!err && data) {
