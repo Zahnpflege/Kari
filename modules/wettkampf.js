@@ -37,7 +37,9 @@ class Wettkampf {
         if (this.structure[bahn][wk] === undefined) {
             this.structure[bahn][wk] = []
         }
-        this.structure[bahn][wk].push(lauf)
+        if(!this.structure[bahn][wk].includes(lauf)){
+            this.structure[bahn][wk].push(lauf)
+        }
         this.data[bahn].push({'data': data, 'signature': undefined})
     }
 
@@ -59,14 +61,16 @@ class Wettkampf {
                         this.data[bahn][laufIndex]['signature'] = signature
                     }else{
                         console.warn('[WARN] Wrong Signature')
-                        return 'Wrong Signature'
+                        return '{"Error": "Wrong Signature"}'
                     }
+                }else{
+                    return '{"Error": "Cannot add Time for future Heats. Please Enter the current Heat first!"}'
                 }
             }
 
         } else {
             console.warn('[WARN] No start found for addTime: Wk ' + wk + ' Lauf ' + lauf + ' Bahn ' + bahn)
-            return 'No start found for: Wk ' + wk + ' Lauf ' + lauf + ' Bahn ' + bahn
+            return '{"Error": "No start found for: Wk ' + wk + ' Lauf ' + lauf + ' Bahn ' + bahn + '"} '
         }
         return 1
     }
@@ -87,13 +91,13 @@ class Wettkampf {
         }
     }
 
-    getLaufIndex(bahn, wk, lauf) {
+    getLaufIndex(bahn, wk_nr, lauf) {
         if (this.data[bahn] === undefined) {
             return false
         }
         for (let i = 0; i < this.data[bahn].length; i++) {
             let start = this.data[bahn][i]['data']
-            if (start['Lauf'] === lauf && start["WK_Nr"] === wk) {
+            if (start['Lauf'] === lauf && start["WK_Nr"] === wk_nr) {
                 return i
             }
         }
@@ -140,6 +144,29 @@ class Wettkampf {
         return res
     }
 
+    getWkAlpha(wk_nr){
+        for(let bahn in this.data) {
+            for (let i in this.data[bahn]) {
+                let start = this.data[bahn][i]['data']
+                if (start['WK_Nr'] === wk_nr){
+                    return start['WK_alpha']
+                }
+            }
+        }
+        return -1
+    }
+
+    getWkNr(wk_Alpha){
+        for(let bahn in this.data) {
+            for (let i in this.data[bahn]) {
+                let start = this.data[bahn][i]['data']
+                if (start['WK_alpha'] === wk_Alpha){
+                    return start['WK_Nr']
+                }
+            }
+        }
+        return -1
+    }
 }
 
 module.exports = Wettkampf

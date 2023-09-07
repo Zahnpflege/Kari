@@ -21,12 +21,28 @@ document.getElementById('structureBtn').addEventListener('click', () => {
     structureContainer.hidden = false
 })
 document.getElementById('current').addEventListener('click', () => {
-    if(document.getElementById('appcontent').hidden){
+    if (document.getElementById('appcontent').hidden) {
         hideAll();
         document.getElementById('appcontent').hidden = false
-    }else{
-        if(!latestLauf){
-            socket.emit('nextLauf')
+    } else {
+        if (!latestLauf) {
+            const response = fetch("/postTime", {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({'heat': 'next'}),
+            });
+
+            response.then(async function (data) {
+                data = await data.json()
+                data = data['data']
+
+                currentData = data;
+                changeDisplayedData(data);
+
+            });
         }
     }
 
@@ -43,11 +59,18 @@ let latestLauf
 
 let structure
 
-var socket = io();
+const responseStructure = fetch("/structure", {
+    method: 'GET',
+    headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+    }
+});
 
+responseStructure.then(async function (data) {
+    data = await data.json()
+    structure = data
 
-socket.on('structure', (message) => {
-    structure = JSON.parse(message)
     wkSelect.innerHTML = '<option></option>'
     for (let wk in structure) {
         let opt = document.createElement('option');
@@ -55,10 +78,10 @@ socket.on('structure', (message) => {
         opt.innerHTML = wk;
         wkSelect.appendChild(opt);
     }
-    wkSelect.addEventListener('change', ()=>{
+    wkSelect.addEventListener('change', () => {
         laufSelect.innerHTML = '<option></option>'
         let selectedWk = wkSelect.value
-        for(let i in structure[selectedWk]){
+        for (let i in structure[selectedWk]) {
             let lauf = structure[selectedWk][i]
             let opt = document.createElement('option');
             opt.value = lauf;
@@ -66,10 +89,10 @@ socket.on('structure', (message) => {
             laufSelect.appendChild(opt);
         }
     })
-})
+});
 
 currentData = ''
-const response =  fetch("/postTime", {
+const response = fetch("/postTime", {
     method: 'POST',
     headers: {
         'Accept': 'application/json',
@@ -78,7 +101,7 @@ const response =  fetch("/postTime", {
     body: JSON.stringify({'heat': 'next'}),
 });
 
-response.then(async function(data) {
+response.then(async function (data) {
     data = await data.json()
     data = data['data']
 
@@ -87,10 +110,6 @@ response.then(async function(data) {
 
 }); //todo
 
-
-socket.on('error', (message)=>{
-    errorLog.innerText = message
-})
 
 function changeDisplayedData(data) {
     hideAll()
@@ -104,14 +123,14 @@ function changeDisplayedData(data) {
     lauf.innerText = data['Lauf']
     schwimmer.innerText = data['Aktiver']
     zzList.innerHTML = ''
-    if(data['Endzeit']=== ''){
+    if (data['Endzeit'] === '') {
         min.value = ''
         sek.value = ''
         mil.value = ''
-    }else{
-        min.value = data['Endzeit'].substring(0,2)
-        sek.value = data['Endzeit'].substring(3,5)
-        mil.value = data['Endzeit'].substring(6,8)
+    } else {
+        min.value = data['Endzeit'].substring(0, 2)
+        sek.value = data['Endzeit'].substring(3, 5)
+        mil.value = data['Endzeit'].substring(6, 8)
     }
 
 
@@ -174,11 +193,16 @@ async function sendData() {
     });
 
     response.json().then(data => {
-        data = data['data']
-        currentData = data
-        changeDisplayedData(data);
+        if (data['Error']) {
+            logError(data['Error'])
+        } else {
+            data = data['data']
+            currentData = data
+            changeDisplayedData(data);
+        }
+
     });
-    
+
     console.log('sent:' + JSON.stringify(currentData))
     return true
 }
@@ -216,10 +240,6 @@ function logError(errorMessage) {
     errorLog.innerText = errorMessage
 }
 
-function registerSocket() {
-    let data = {'bahn': bahn, 'wettkampf': wettkampf, 'password': passwordInput.value}
-    socket.emit('register', JSON.stringify(data))
-}
 
 function createZZ(wkName) {
 
@@ -229,15 +249,32 @@ function createZZ(wkName) {
     }
 }
 
-function selectLauf(){
+function selectLauf() {
     let wk = wkSelect.value
     let lauf = laufSelect.value
 
-    if(wk !== '' && lauf !== ''){
-        socket.emit('selectLauf', JSON.stringify({'wk':wk,"lauf":lauf}))
+    if (wk !== '' && lauf !== '') {
+
+        const response = fetch("/postTime", {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({'heat': {'wk': wk, "heat": lauf}}),
+        });
+
+        response.then(async function (data) {
+            data = await data.json()
+            data = data['data']
+
+            latestLauf = false
+            currentData = data
+            changeDisplayedData(currentData)
+
+        });
     }
 }
-
 
 
 function hideAll() {

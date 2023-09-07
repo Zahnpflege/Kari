@@ -77,39 +77,15 @@ function sendStructure(socket) {
     }
 }
 
-io.on('connection', (socket) => {
-    log('sckt connection: ' + socket.id)
-    socket.on('register', (msg) => {
-        log('sckt register: ' + msg)
-        try {
-            let data = JSON.parse(msg)
-            if (wettkampfDaten[data.wettkampf].password === data.password) {
-                socketData[socket.id] = {
-                    bahn: data.bahn,
-                    wettkampf: data.wettkampf
-                }
-                sendNext(socket)
-                sendStructure(socket)
-                console.log('user registered')
-            } else {
-                console.log('Wrong Password')
-            }
-        } catch (e) {
-            console.error('Error while registering user: ' + e)
-        }
-    })
+function returnStructure(session) {
+    let bahn = session.bahn
+    let wettkampf = session.wettkampf
 
-    socket.on('selectLauf', (msg) => {
-        log('[INFO] Got selectLauf: ' + msg)
-        let data = JSON.parse(msg)
-        let start = wettkampfDaten[socketData[socket.id].wettkampf].getStart(socketData[socket.id].bahn, data['wk'], data['lauf'])
-        sendStart(socket, start)
-    })
+    let structure = wettkampfDaten[wettkampf].getStructure(bahn)
 
-    socket.on('nextLauf', (msg) => {
-        sendNext(socket)
-    })
-});
+    return structure
+
+}
 
 function handleData(msg, wettkampf) {
     fs.writeFileSync(path.join(__dirname, 'Backup.json'), JSON.stringify(wettkampfDaten))
@@ -136,7 +112,7 @@ io.of("/admin").on("connection", function (socket) {
             data = JSON.parse(message)
 
             let start_data = data['start']
-            console.log('[INFO] adding Start: ' + start_data)
+            //console.log('[INFO] adding Start: ' + start_data)
             wettkampfDaten[data.wettkampf].addStart(start_data)
             //addStart(data.wettkampf, start_data)
         } catch (e) {
@@ -282,7 +258,7 @@ app.post('/auth', function (request, response) {
                 if (wettkampfDaten[wettkampf].password === password) {
                     let bahn = request.body.bahn
                     if (!bahn) {
-                        res.send('Bitte Bahn angeben')
+                        response.send('Bitte Bahn angeben')
                         return
                     }
                     // Authenticate the user
@@ -335,9 +311,10 @@ app.all('/lane/', function (req, res) {
 app.post('/postTime',(req,res)=>{
     if(!req.session.logged_in){
         res.send('please log in')
+        return
     }
     let data = req.body
-    log('Sckt Zeit: ' + JSON.stringify(data))
+    log('Got Data: ' + JSON.stringify(data))
 
     if (req.session.wettkampf && req.session.bahn) {
         if(data['data']){
@@ -348,19 +325,39 @@ app.post('/postTime',(req,res)=>{
                 handleData(data, req.session.wettkampf)
                 res.send(response)
             } else {
+                log('Sending: ' + result)
                 res.send( result)
             }
         }else{
-            if(data['heat'] === 'next'){
-                let response = JSON.stringify(returnNextHeat(req.session))
-                log('Sending '+ response)
-                res.send(response)
+            if (data['heat']){  //todo split in get request
+                if(data['heat'] === 'next'){
+                    let response = JSON.stringify(returnNextHeat(req.session))
+                    log('Sending '+ response)
+                    res.send(response)
+                }else{
+                    let heat = data['heat']['heat']
+                    let wk = data['heat']['wk']
+                    let start = JSON.stringify(wettkampfDaten[req.session.wettkampf].getStart(req.session.bahn, wettkampfDaten[req.session.wettkampf].getWkNr(wk), heat))
+                    log('Sending '+ start)
+                    res.send(start)
+                }
             }
+
         }
 
     } else {
         log('Error Socket not found')
     }
+})
+
+app.get('/structure', (req,res) =>{
+    if(!req.session.logged_in){
+        res.send('please log in')
+        return
+    }
+    log('sending: '+JSON.stringify(returnStructure(req.session)))
+    res.send(JSON.stringify(returnStructure(req.session)))
+
 })
 
 server.listen(port, '0.0.0.0', () => {
