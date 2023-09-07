@@ -1,6 +1,8 @@
 let structure = JSON.parse(document.getElementById('structure').innerText)
 let wettkampfSelect = document.getElementById('wettkampf')
 let bahnSelect = document.getElementById('bahn')
+let rolleSelect = document.getElementById('rolle')
+let bahnRow = document.getElementById('bahnRow')
 
 for (let wk in structure) {
     let opt = document.createElement('option');
@@ -27,6 +29,13 @@ wettkampfSelect.addEventListener('change', () => {
 
 })
 
+rolleSelect.addEventListener('change', () => {
+    if(rolleSelect.value === 'kari'){
+        bahnRow.hidden = false
+    }else{
+        bahnRow.hidden = true
+    }
+})
 function getRadioButton(name, value) {
     return '<input type="radio" id="' + value + '" name="' + name + '" value="' + value + '"><label for="' + value + '">' + value + '</label><br>'
 }

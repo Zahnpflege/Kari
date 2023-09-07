@@ -13,7 +13,6 @@ let navigationContainer = document.getElementById('navigation')
 let wkSelect = document.getElementById('wk_select')
 let laufSelect = document.getElementById('lauf_select')
 let signature = document.getElementById('signature')
-document.getElementById('pwd_btn').addEventListener('click', registerSocket)
 document.getElementById('submitBtn').addEventListener('click', sendData)
 document.getElementById('selectLaufBtn').addEventListener('click', selectLauf)
 document.getElementById('zzBtn').addEventListener('click', addZwischenZeit)
@@ -41,31 +40,11 @@ document.getElementById('headText').innerText = wettkampf + ', Bahn: ' + bahn
 let zzindex = 0
 
 let latestLauf
-let currentData = {
-    schwimmer: '',
-    wk: '',
-    lauf: '',
-    bahn: '',
-    zeit: '00:00,00'
-};
+
 let structure
 
 var socket = io();
 
-socket.on('next', (message) => {
-    console.log(message)
-    latestLauf = true
-    currentData = JSON.parse(message)['data']
-    changeDisplayedData(currentData)
-
-})
-
-socket.on('selectedStart',(message)=>{
-    console.log(message)
-    latestLauf = false
-    currentData = JSON.parse(message)['data']
-    changeDisplayedData(currentData)
-})
 
 socket.on('structure', (message) => {
     structure = JSON.parse(message)
@@ -88,6 +67,26 @@ socket.on('structure', (message) => {
         }
     })
 })
+
+currentData = ''
+const response =  fetch("/postTime", {
+    method: 'POST',
+    headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({'heat': 'next'}),
+});
+
+response.then(async function(data) {
+    data = await data.json()
+    data = data['data']
+
+    currentData = data;
+    changeDisplayedData(data);
+
+}); //todo
+
 
 socket.on('error', (message)=>{
     errorLog.innerText = message
@@ -119,7 +118,7 @@ function changeDisplayedData(data) {
     createZZ(data['WK_Titel'])
 }
 
-function sendData() {
+async function sendData() {
     console.log('sending Data')
     logError('')
 
@@ -165,7 +164,21 @@ function sendData() {
     }
     currentData.Endzeit = endZeit
 
-    socket.emit('zeit', JSON.stringify({'data': currentData, 'signature': signature.value}))
+    const response = await fetch("/postTime", {
+        method: 'POST',
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({'data': currentData, 'signature': signature.value}),
+    });
+
+    response.json().then(data => {
+        data = data['data']
+        currentData = data
+        changeDisplayedData(data);
+    });
+    
     console.log('sent:' + JSON.stringify(currentData))
     return true
 }
@@ -223,11 +236,11 @@ function selectLauf(){
     if(wk !== '' && lauf !== ''){
         socket.emit('selectLauf', JSON.stringify({'wk':wk,"lauf":lauf}))
     }
-
 }
 
+
+
 function hideAll() {
-    document.getElementById('register').hidden = true
     document.getElementById('appcontent').hidden = true
     structureContainer.hidden = true
 }

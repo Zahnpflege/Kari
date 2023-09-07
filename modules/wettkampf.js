@@ -2,17 +2,19 @@ class Wettkampf {
 
     data = {}
     password = undefined
+    visitorPassword = undefined
     current = {}
     structure = {}
     wkStats = {}
 
-    constructor(name, password, data, current, structure, wkStats) {
+    constructor(name, password, visitorPassword, data, current, structure, wkStats) {
         this.name = name
         this.password = password
         this.data = data
         this.current = current
         this.structure = structure
         this.wkStats = wkStats
+        this.visitorPassword = visitorPassword
     }
 
     addStart(data_json) {
@@ -20,6 +22,7 @@ class Wettkampf {
         let lauf = data['Lauf']
         let wk = data['WK_alpha']
         let bahn = data['Bahn']
+        let wk_nr = data['WK_Nr']
 
         if (this.data[bahn] === undefined) {
             this.data[bahn] = []
@@ -27,8 +30,8 @@ class Wettkampf {
             this.structure[bahn] = {}
         }
 
-        if(!this.wkStats[wk]){
-            this.wkStats[wk] = {'name': data['WK_Titel'], 'nr': wk}
+        if(!this.wkStats[wk_nr]){
+            this.wkStats[wk_nr] = {'name': data['WK_Titel'], 'nr': wk}
         }
 
         if (this.structure[bahn][wk] === undefined) {
@@ -123,12 +126,15 @@ class Wettkampf {
         return res
     }
 
-    createFileContent(){
+
+    createFileContent(wk_nr){
         let res = ''
         for(let bahn in this.data) {
             for (let i in this.data[bahn]) {
                 let start = this.data[bahn][i]['data']
-                res += JSON.stringify(start) + "\n"
+                if(!wk_nr || wk_nr ===  start['WK_Nr']){
+                    res += JSON.stringify(start) + "\n"
+                }
             }
         }
         return res

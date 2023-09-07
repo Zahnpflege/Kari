@@ -12,7 +12,7 @@
     select{width: 150px}
 </style>
 <body>
-<form action="/lane" method="get">
+<form action="/auth" method="post">
 
 
     <div class="container box">
@@ -22,10 +22,21 @@
         </div>
 
         <div class="row">
-            Bahn: <select name="bahn" id="bahn">
+            Rolle: <select name="rolle" id="rolle">
             <option></option>
-            <option>--Bitte Wettkampf auswählen--</option>
+            <option value="kari"> Kampfrichter</option>
+            <option value="visitor"> Besucher </option>
         </select>
+        </div>
+
+        <div class="row" id="bahnRow" hidden>Bahn: <select id="bahn" name="bahn">
+            <option> -- Bitte Wettkampf Auswählen -- </option>
+        </select>
+        </div>
+
+        <div class="row">
+            <label for="pwd">Password:</label>
+            <input type="password" id="pwd" name="password"><br><br>
         </div>
 
         <div>

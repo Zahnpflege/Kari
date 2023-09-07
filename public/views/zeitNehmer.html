@@ -20,11 +20,6 @@
     </div>
 </div>
 
-<div id="register">
-    <label for="passwort">Passwort:</label>
-    <input id="passwort" size="10">
-    <button id="pwd_btn">Anmelden</button>
-</div>
 
 <div id="navigation" class="container" hidden>
     <div class="row">
@@ -34,26 +29,26 @@
     </div>
 </div>
 
-<div id="appcontent" hidden class="container">
+<div id="appcontent" class="container">
     <div>
 
         <div class="row">
-            <b>Wk-Nr.: &nbsp;</b>
+            <b>Wk-Nr.: </b>
             <div id="wk"></div>
         </div>
 
         <div class="row">
-            <b>Wk-Name: &nbsp;</b>
+            <b>Wk-Name: </b>
             <div id="wkName"></div>
         </div>
 
         <div class="row">
-            <b>Lauf: &nbsp;</b>
+            <b>Lauf: </b>
             <div id="lauf"></div>
         </div>
 
         <div class="row">
-            <b>Schwimmer/in:&nbsp;</b>
+            <b>Schwimmer/in: </b>
             <div id="schwimmer"></div>
         </div>
     </div>
@@ -64,11 +59,11 @@
         <input type="text" id="mil" placeholder="00" maxlength="2" size="2">
     </div>
     <div>
-        <p id="errorLog" style="color: red"></p>
+        <p id="errorLog" style="color: red">{{error}}</p>
     </div>
 
     <div class="row">
-        <b>Unterschrift:&nbsp;</b>
+        <b>Unterschrift:</b>
         <input type="password" id="signature" maxlength="4" size="4">
 
     </div>
@@ -101,6 +96,7 @@
 </div>
 
 </body>
+
 <script src="/socket.io/socket.io.js"></script>
 <script src="../javascripts/zeitNehmer.js"></script>
 </html>

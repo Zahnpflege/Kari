@@ -12,6 +12,7 @@ const {Server} = require("socket.io");
 const io = new Server(server);
 const fs = require('fs');
 var port = 80;
+const session = require('express-session');
 
 app.engine('html', mustache());
 app.use(express.static(path.join(__dirname, 'public'), {index: 'login.html'}))
@@ -20,8 +21,13 @@ app.use(express.urlencoded({extended: false}))
 
 app.use(express.json())
 
-app.use('/lane', lanes)
 app.use('/admin', admin)
+
+app.use(session({
+    secret: 'secret',
+    resave: true,
+    saveUninitialized: true
+}));
 
 let wettkampfDaten = loadBackup()
 let socketData = []
@@ -35,6 +41,16 @@ function sendNext(socket) {
         start = JSON.stringify(start)
         console.log('sending next: ' + start)
         socket.emit('next', start)
+    }
+}
+
+function returnNextHeat(session) {
+    let bahn = session.bahn
+    let wk = session.wettkampf
+
+    let start = wettkampfDaten[wk].getCurrentStart(bahn)
+    if (start !== false) {
+        return start
     }
 }
 
@@ -83,22 +99,6 @@ io.on('connection', (socket) => {
         }
     })
 
-    socket.on('zeit', (msg) => {
-        log('Sckt Zeit: ' + msg)
-        let data = JSON.parse(msg)
-        if (socketData[socket.id]) {
-            let result = wettkampfDaten[socketData[socket.id].wettkampf].addTime(data['data'], data['signature'])
-            if (result === 1) {
-                sendNext(socket)
-                handleData(msg, socketData[socket.id].wettkampf)
-            } else {
-                sendError(socket, result)
-            }
-        } else {
-            log('Error Socket not found')
-        }
-    });
-
     socket.on('selectLauf', (msg) => {
         log('[INFO] Got selectLauf: ' + msg)
         let data = JSON.parse(msg)
@@ -113,9 +113,9 @@ io.on('connection', (socket) => {
 
 function handleData(msg, wettkampf) {
     fs.writeFileSync(path.join(__dirname, 'Backup.json'), JSON.stringify(wettkampfDaten))
-    let msg_data = JSON.parse(msg)['data']
-    if ('WK_Nr' in msg_data){
-        log('added Message to Times: '+ msg)
+    let msg_data = msg['data']
+    if ('WK_Nr' in msg_data) {
+        log('added Message to Times: ' + msg)
         fs.writeFileSync(path.join(__dirname, 'Zeiten') + '/' + wettkampf + '/' + msg_data['WK_Nr'] + '.json', JSON.stringify(msg_data) + "\n", {flag: 'a+'})
         console.log(path.join(__dirname, 'Zeiten') + '/' + wettkampf + '/' + msg_data['WK_Nr'] + '.json')
     }
@@ -127,7 +127,7 @@ io.of("/admin").on("connection", function (socket) {
         if (data['wk_name'] === undefined) {
             return false
         }
-        wettkampfDaten[data['wk_name']] = new Wettkampf(data['wk_name'], data['password'], {}, {}, {}, {})
+        wettkampfDaten[data['wk_name']] = new Wettkampf(data['wk_name'], data['password'], data['visitorPassword'], {}, {}, {}, {})
     })
 
     socket.on('neuerStart', (message) => {
@@ -162,7 +162,7 @@ function loadBackup() {
 
     for (let name in backup_data) {
         data = backup_data[name]
-        backup[name] = new Wettkampf(data['name'], data['password'], data['data'], data['current'], data['structure'], data['wkStats'])
+        backup[name] = new Wettkampf(data['name'], data['password'], data['visitorPassword'], data['data'], data['current'], data['structure'], data['wkStats'])
     }
     return backup
 }
@@ -174,6 +174,7 @@ function log(message) {
 app.all('/', (req, res) => {
     let data = {}
     for (let wettkampf in wettkampfDaten) {
+        console.log(wettkampfDaten[wettkampf])
         data[wettkampf] = Object.keys(wettkampfDaten[wettkampf].data)
     }
     res.render(path.join(__dirname, "./public/views/anmelde.html"), {structure: JSON.stringify(data)});
@@ -183,7 +184,10 @@ app.all('/', (req, res) => {
 // path for wk overview to return results. If wettkampf and wk are set, results are displayed
 app.all('/out', function (req, res) {
     let params = req.query
-
+    if (!req.session.logged_in) {
+        res.send('Please Log In!')
+        return
+    }
     if (!params.wettkampf) {
         let wettkampfe = Object.keys(wettkampfDaten)
         res.render(path.join(__dirname, "./public/views/admin_output.html"), {
@@ -203,7 +207,7 @@ app.all('/out', function (req, res) {
         if (params.wettkampf && params.wk) {
             let wkData = wettkampfDaten[params.wettkampf].getWkNachLauf(params.wk)
             res.render(path.join(__dirname, "./public/views/admin_output.html"), {
-                appcontent: htmlCreator.createWkZeiten(wkData),
+                appcontent: htmlCreator.createWkZeiten(wkData,params.wettkampf, params.wk),
                 'headbar': params.wettkampf + ' Wk:' + params.wk
             });
         }
@@ -211,58 +215,153 @@ app.all('/out', function (req, res) {
 });
 
 app.get('/download', function (req, res) {
-    fs.writeFile('./Temp/' + req.query.wettkampf + '.json', wettkampfDaten[req.query.wettkampf].createFileContent(), (err) => {
+    fs.writeFile('./Temp/' + req.query.wettkampf + '.json', wettkampfDaten[req.query.wettkampf].createFileContent(req.query.wk), (err) => {
     }, () => {
         res.download('./Temp/' + req.query.wettkampf + '.json', () => {
-            fs.unlink('./Temp/' + req.query.wettkampf + '.json',()=>{})
+            fs.unlink('./Temp/' + req.query.wettkampf + '.json', () => {
+            })
         })
 
     })
 
 })
 
-app.get('/wettkampf/:wettkampf/:wk_nr', function (req,res){
+app.get('/wettkampf/:wettkampf/:wk_nr', function (req, res) {
     var wettkampf = req.params['wettkampf']
     var wk_nr = req.params['wk_nr']
-    console.log(wettkampfDaten)
-    if(wettkampf in wettkampfDaten){
-        fs.readFile(path.join(__dirname,'/Zeiten/'+wettkampf+'/'+ wk_nr + '.json'),  (err, data) => {
+    if (wettkampf in wettkampfDaten) {
+        fs.readFile(path.join(__dirname, '/Zeiten/' + wettkampf + '/' + wk_nr + '.json'), (err, data) => {
             if (!err && data) {
                 res.writeHead(200, {'Content-Type': 'text/plain'});
                 res.write(data)
                 res.end()
-            }else{
-                res.send('Wettkampfnummer "'+ wk_nr+ '" ungültig.  ' + err)
+            } else {
+                res.send('Wettkampfnummer "' + wk_nr + '" ungültig.  ' + err)
             }
         });
-    }else{
+    } else {
         res.send('Wettkampf "' + wettkampf + '" existiert nicht')
     }
-} )
+})
 
-app.get('/wettkampfDownload/:wettkampf/:wk_nr', function (req,res){
+app.get('/wettkampfDownload/:wettkampf/:wk_nr', function (req, res) {
     var wettkampf = req.params['wettkampf']
     var wk_nr = req.params['wk_nr']
-    if(wettkampf in wettkampfDaten){
-        fs.readFile(path.join(__dirname,'/Zeiten/'+wettkampf+'/'+ wk_nr + '.json'),  (err, data) => {
+    if (wettkampf in wettkampfDaten) {
+        fs.readFile(path.join(__dirname, '/Zeiten/' + wettkampf + '/' + wk_nr + '.json'), (err, data) => {
             if (!err && data) {
-                res.download(path.join(__dirname,'/Zeiten/'+wettkampf+'/'+ wk_nr + '.json'))
-            }else{
-                res.send('Wettkampfnummer "'+ wk_nr+ '" ungültig')
+                res.download(path.join(__dirname, '/Zeiten/' + wettkampf + '/' + wk_nr + '.json'))
+            } else {
+                res.send('Wettkampfnummer "' + wk_nr + '" ungültig')
             }
         });
-    }else{
+    } else {
         res.send('Wettkampf "' + wettkampf + '" existiert nicht')
     }
 })
 
-app.get('/disqualify', function (req,res){
-    res.render(path.join(__dirname, "./public/views/disqualy.html"),{});
+app.get('/disqualify', function (req, res) {
+    res.render(path.join(__dirname, "./public/views/disqualy.html"), {});
 })
-app.get('/zoe', function (req,res){
+app.get('/zoe', function (req, res) {
     res.send('Zoe raucht')
 })
 
+app.post('/auth', function (request, response) {
+    // Capture the input fields
+    let wettkampf = request.body.wettkampf;
+    let password = request.body.password;
+    let rolle = request.body.rolle;
+
+    // Ensure the input fields exists and are not empty
+    if (wettkampf && password && rolle) {
+
+        if (wettkampf in wettkampfDaten) {
+            // If the account exists
+            if (rolle === 'kari') {
+                if (wettkampfDaten[wettkampf].password === password) {
+                    let bahn = request.body.bahn
+                    if (!bahn) {
+                        res.send('Bitte Bahn angeben')
+                        return
+                    }
+                    // Authenticate the user
+                    request.session.logged_in = true;
+                    request.session.wettkampf = wettkampf;
+                    request.session.rolle = rolle
+                    request.session.bahn = bahn
+                    // Redirect to home page
+                    response.redirect('/lane?wettkampf=' + wettkampf + "&bahn=" + bahn);
+                } else {
+                    response.send('Incorrect Password!');
+                }
+            }
+
+            if (rolle === 'visitor') {
+
+                if (wettkampfDaten[wettkampf].visitorPassword === password) {
+                    // Authenticate the user
+                    request.session.logged_in = true;
+                    request.session.wettkampf = wettkampf;
+                    request.session.rolle = rolle
+                    // Redirect to home page
+                    response.redirect('/out?wettkampf=' + wettkampf);
+                } else {
+                    response.send('Incorrect Password!');
+                }
+            }
+            response.end();
+        } else {
+            response.send('Wettkampf nicht vorhanden');
+            response.end();
+        }
+    }
+});
+
+app.all('/lane/', function (req, res) {
+    console.log('[INFO] get /lane data: ' + req.query)
+    if (!req.session.logged_in || req.session.rolle !== 'kari') {
+        res.send('Please Log In!')
+        return
+    }
+    if (req.query.wettkampf) {
+        let start = returnNextHeat(req.session)['data']
+        res.render(path.join(__dirname, "./public/views/zeitNehmer.html"),{})//'currentData':start,'Wk-Nr':start['WK_Nr'], 'Wk-Name': start['WK_Titel'], 'Lauf': start['Lauf'], 'Schwimmer': start['Aktiver']});
+    } else {
+        res.send('Wettkampf nicht angegeben')
+    }
+});
+
+app.post('/postTime',(req,res)=>{
+    if(!req.session.logged_in){
+        res.send('please log in')
+    }
+    let data = req.body
+    log('Sckt Zeit: ' + JSON.stringify(data))
+
+    if (req.session.wettkampf && req.session.bahn) {
+        if(data['data']){
+            log('Got Time-Data '+ data['data'])
+            let result = wettkampfDaten[req.session.wettkampf].addTime(data['data'], data['signature'])
+            if (result === 1) {
+                let response = JSON.stringify(returnNextHeat(req.session))
+                handleData(data, req.session.wettkampf)
+                res.send(response)
+            } else {
+                res.send( result)
+            }
+        }else{
+            if(data['heat'] === 'next'){
+                let response = JSON.stringify(returnNextHeat(req.session))
+                log('Sending '+ response)
+                res.send(response)
+            }
+        }
+
+    } else {
+        log('Error Socket not found')
+    }
+})
 
 server.listen(port, '0.0.0.0', () => {
     console.log('listening on: ' + port);

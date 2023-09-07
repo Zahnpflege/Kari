@@ -14,13 +14,14 @@ class HTMLCreator{
         for(let i in wkStats){
 
             let wk = wkStats[i]['name']
-            res += ` <form action="/out"><input hidden name="wettkampf" value="${wettkampf}"> <button class="button secondary-btn" type="submit" name="wk" value="${i}">${i} - ${wk}</button></form>`
+            let nr = wkStats[i]['nr']
+            res += ` <form action="/out"><input hidden name="wettkampf" value="${wettkampf}"> <button class="button secondary-btn" type="submit" name="wk" value="${i}">${nr} - ${wk}</button></form>`
         }
         res += `<form action="/download"> <button class="button secondary-btn" type="submit" name="wettkampf" value="${wettkampf}">Download File</button></form>`
         return res
     }
 
-    static createWkZeiten(zeitData){
+    static createWkZeiten(zeitData,wettkampf ,wk ){
         let res = ''
 
         for(let lauf in zeitData){
@@ -32,6 +33,7 @@ class HTMLCreator{
             }
             res+= '<hr>'
         }
+        res += `<form action="/download"><input name="wk" value="${wk}" hidden> <button class="button secondary-btn" type="submit" name="wettkampf" value="${wettkampf}">Download File</button></form>`
 
         return res
     }
