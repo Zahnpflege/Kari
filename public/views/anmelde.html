@@ -9,27 +9,34 @@
     <link rel="stylesheet" type="text/css" href="../stylesheets/style.css">
 </head>
 <style>
-    select{width: 150px}
+    select{width: 50%; height: 35px}
+    label{width: 50%}
+    input{width: 50%; height: 35px}
 </style>
 <body>
 <form action="/auth" method="post">
 
 
     <div class="container box">
-        <div class="row">Wettkampf: <select id="wettkampf" name="wettkampf">
+        <div class="row">
+            <label for="wettkampf">Wettkampf:</label>
+            <select id="wettkampf" name="wettkampf">
             <option></option>
         </select>
         </div>
 
         <div class="row">
-            Rolle: <select name="rolle" id="rolle">
+            <label for="rolle">Rolle:</label>
+            <select name="rolle" id="rolle">
             <option></option>
             <option value="kari"> Kampfrichter</option>
             <option value="visitor"> Besucher </option>
         </select>
         </div>
 
-        <div class="row" id="bahnRow" hidden>Bahn: <select id="bahn" name="bahn">
+        <div class="row" id="bahnRow" hidden>
+            <label for="bahn">Bahn:</label>
+            <select id="bahn" name="bahn">
             <option> -- Bitte Wettkampf Auswählen -- </option>
         </select>
         </div>

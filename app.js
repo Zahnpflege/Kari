@@ -80,10 +80,16 @@ function sendStructure(socket) {
 function returnStructure(session) {
     let bahn = session.bahn
     let wettkampf = session.wettkampf
+    if(bahn && wettkampf){
+        let structure = wettkampfDaten[wettkampf].getStructure(bahn)
 
-    let structure = wettkampfDaten[wettkampf].getStructure(bahn)
+        return structure
+    }else{
+        return '{"Error": "Missing Data"}'
 
-    return structure
+    }
+
+
 
 }
 
@@ -202,40 +208,6 @@ app.get('/download', function (req, res) {
 
 })
 
-app.get('/wettkampf/:wettkampf/:wk_nr', function (req, res) {
-    var wettkampf = req.params['wettkampf']
-    var wk_nr = req.params['wk_nr']
-    if (wettkampf in wettkampfDaten) {
-        fs.readFile(path.join(__dirname, '/Zeiten/' + wettkampf + '/' + wk_nr + '.json'), (err, data) => {
-            if (!err && data) {
-                res.writeHead(200, {'Content-Type': 'text/plain'});
-                res.write(data)
-                res.end()
-            } else {
-                res.send('Wettkampfnummer "' + wk_nr + '" ungültig.  ' + err)
-            }
-        });
-    } else {
-        res.send('Wettkampf "' + wettkampf + '" existiert nicht')
-    }
-})
-
-// app.get('/wettkampfDownload/:wettkampf/:wk_nr', function (req, res) {
-//     var wettkampf = req.params['wettkampf']
-//     var wk_nr = req.params['wk_nr']
-//     if (wettkampf in wettkampfDaten) {
-//         fs.readFile(path.join(__dirname, '/Zeiten/' + wettkampf + '/' + wk_nr + '.json'), (err, data) => {
-//             if (!err && data) {
-//                 res.download(path.join(__dirname, '/Zeiten/' + wettkampf + '/' + wk_nr + '.json'))
-//             } else {
-//                 res.send('Wettkampfnummer "' + wk_nr + '" ungültig')
-//             }
-//         });
-//     } else {
-//         res.send('Wettkampf "' + wettkampf + '" existiert nicht')
-//     }
-// })
-
 app.get('/disqualify', function (req, res) {
     res.render(path.join(__dirname, "./public/views/disqualy.html"), {});
 })
@@ -251,7 +223,6 @@ app.post('/auth', function (request, response) {
 
     // Ensure the input fields exists and are not empty
     if (wettkampf && password && rolle) {
-
         if (wettkampf in wettkampfDaten) {
             // If the account exists
             if (rolle === 'kari') {
@@ -291,12 +262,14 @@ app.post('/auth', function (request, response) {
             response.send('Wettkampf nicht vorhanden');
             response.end();
         }
+    }else{
+        res.send('Wettkampf, Passwort oder Rolle nicht angegeben!')
     }
 });
 
 app.all('/lane/', function (req, res) {
     console.log('[INFO] get /lane data: ' + req.query)
-    if (!req.session.logged_in || req.session.rolle !== 'kari') {
+    if (!req.session.logged_in || req.session.rolle !== 'kari' || !req.session.bahn) {
         res.redirect('/')
         return
     }
@@ -335,12 +308,18 @@ app.post('/postTime',(req,res)=>{
                     log('Sending '+ response)
                     res.send(response)
                 }else{
-                    let heat = data['heat']['heat']
-                    let wk = data['heat']['wk']
-                    let start = JSON.stringify(wettkampfDaten[req.session.wettkampf].getStart(req.session.bahn, wettkampfDaten[req.session.wettkampf].getWkNr(wk), heat))
-                    log('Sending '+ start)
-                    res.send(start)
+                    if(data['heat']['heat'] && data['heat']['wk']) {
+                        let heat = data['heat']['heat']
+                        let wk = data['heat']['wk']
+                        let start = JSON.stringify(wettkampfDaten[req.session.wettkampf].getStart(req.session.bahn, wettkampfDaten[req.session.wettkampf].getWkNr(wk), heat))
+                        log('Sending ' + start)
+                        res.send(start)
+                    }else{
+                        res.send('{"Error": "Missing Data"}')
+                    }
                 }
+            }else{
+                res.send('{"Error": "Missing Data"}')
             }
 
         }
