@@ -36,7 +36,9 @@ document.getElementById('current').addEventListener('click', () => {
             });
 
             response.then(async function (data) {
+
                 data = await data.json()
+                console.log('Got: ' + data)
                 data = data['data']
 
                 currentData = data;
@@ -69,6 +71,7 @@ const responseStructure = fetch("/structure", {
 
 responseStructure.then(async function (data) {
     data = await data.json()
+    console.log('Got: ' + data)
     structure = data
 
     wkSelect.innerHTML = '<option></option>'
@@ -103,6 +106,8 @@ const response = fetch("/postTime", {
 
 response.then(async function (data) {
     data = await data.json()
+    console.log('Got: ' + data)
+
     data = data['data']
 
     currentData = data;
@@ -266,6 +271,8 @@ function selectLauf() {
 
         response.then(async function (data) {
             data = await data.json()
+            console.log('Got: ' + data)
+
             data = data['data']
 
             latestLauf = false
