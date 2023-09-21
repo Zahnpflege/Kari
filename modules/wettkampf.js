@@ -23,24 +23,25 @@ class Wettkampf {
         let wk = data['WK_alpha']
         let bahn = data['Bahn']
         let wk_nr = data['WK_Nr']
+        if(this.getLaufIndex(bahn,wk_nr,lauf) === -1) {
+            if (this.data[bahn] === undefined) {
+                this.data[bahn] = []
+                this.current[bahn] = 0
+                this.structure[bahn] = {}
+            }
 
-        if (this.data[bahn] === undefined) {
-            this.data[bahn] = []
-            this.current[bahn] = 0
-            this.structure[bahn] = {}
-        }
+            if (!this.wkStats[wk_nr]) {
+                this.wkStats[wk_nr] = {'name': data['WK_Titel'], 'nr': wk}
+            }
 
-        if(!this.wkStats[wk_nr]){
-            this.wkStats[wk_nr] = {'name': data['WK_Titel'], 'nr': wk}
+            if (this.structure[bahn][wk] === undefined) {
+                this.structure[bahn][wk] = []
+            }
+            if (!this.structure[bahn][wk].includes(lauf)) {
+                this.structure[bahn][wk].push(lauf)
+            }
+            this.data[bahn].push({'data': data, 'signature': undefined})
         }
-
-        if (this.structure[bahn][wk] === undefined) {
-            this.structure[bahn][wk] = []
-        }
-        if(!this.structure[bahn][wk].includes(lauf)){
-            this.structure[bahn][wk].push(lauf)
-        }
-        this.data[bahn].push({'data': data, 'signature': undefined})
     }
 
     addTime(data, signature) {
@@ -58,7 +59,8 @@ class Wettkampf {
                 if (laufIndex < this.current[bahn]) {
                     if (this.data[bahn][laufIndex]['signature'] === signature) {
                         this.data[bahn][laufIndex]['data'] = data
-                        this.data[bahn][laufIndex]['signature'] = signature
+                        console.log(data)
+
                     }else{
                         console.warn('[WARN] Wrong Signature')
                         return '{"Error": "Wrong Signature"}'
@@ -72,6 +74,7 @@ class Wettkampf {
             console.warn('[WARN] No start found for addTime: Wk ' + wk + ' Lauf ' + lauf + ' Bahn ' + bahn)
             return '{"Error": "No start found for: Wk ' + wk + ' Lauf ' + lauf + ' Bahn ' + bahn + '"} '
         }
+       console.log('added:' + JSON.stringify(this.data[bahn][laufIndex]['data']))
         return 1
     }
 
@@ -93,7 +96,7 @@ class Wettkampf {
 
     getLaufIndex(bahn, wk_nr, lauf) {
         if (this.data[bahn] === undefined) {
-            return false
+            return -1
         }
         for (let i = 0; i < this.data[bahn].length; i++) {
             let start = this.data[bahn][i]['data']
@@ -124,9 +127,13 @@ class Wettkampf {
                         res[start['Lauf']] = []
                     }
                     res[start['Lauf']][bahn] = start
+                    console.log(res[start['Lauf']][bahn])
+                    console.log(start['Endzeit'])
                 }
             }
         }
+        console.log(res[2][2])
+        // console.log(res[2])
         return res
     }
 

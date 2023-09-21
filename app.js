@@ -32,17 +32,7 @@ app.use(session({
 let wettkampfDaten = loadBackup()
 let socketData = []
 
-function sendNext(socket) {
-    let bahn = socketData[socket.id].bahn
-    let wk = socketData[socket.id].wettkampf
 
-    let start = wettkampfDaten[wk].getCurrentStart(bahn)
-    if (start !== false) {
-        start = JSON.stringify(start)
-        console.log('sending next: ' + start)
-        socket.emit('next', start)
-    }
-}
 
 function returnNextHeat(session) {
     let bahn = session.bahn
@@ -54,28 +44,7 @@ function returnNextHeat(session) {
     }
 }
 
-function sendError(socket, error) {
-    console.log('sending Error: ' + error)
-    socket.emit('error', error)
-}
 
-function sendStart(socket, start) {
-    start = JSON.stringify(start)
-    console.log('sending start: ' + start)
-    socket.emit('selectedStart', start)
-}
-
-function sendStructure(socket) {
-    let bahn = socketData[socket.id].bahn
-    let wk = socketData[socket.id].wettkampf
-
-    let structure = wettkampfDaten[wk].getStructure(bahn)
-    if (structure !== false) {
-        structure = JSON.stringify(structure)
-        console.log('sending structure: ' + structure)
-        socket.emit('structure', structure)
-    }
-}
 
 function returnStructure(session) {
     let bahn = session.bahn
@@ -95,12 +64,12 @@ function returnStructure(session) {
 
 function handleData(msg, wettkampf) {
     fs.writeFileSync(path.join(__dirname, 'Backup.json'), JSON.stringify(wettkampfDaten))
-    let msg_data = msg['data']
-    if ('WK_Nr' in msg_data) {
-        log('added Message to Times: ' + msg)
-        fs.writeFileSync(path.join(__dirname, 'Zeiten') + '/' + wettkampf + '/' + msg_data['WK_Nr'] + '.json', JSON.stringify(msg_data) + "\n", {flag: 'a+'})
-        console.log(path.join(__dirname, 'Zeiten') + '/' + wettkampf + '/' + msg_data['WK_Nr'] + '.json')
-    }
+    // let msg_data = msg['data']
+    // if ('WK_Nr' in msg_data) {
+    //     log('added Message to Times: ' + msg)
+    //     fs.writeFileSync(path.join(__dirname, 'Zeiten') + '/' + wettkampf + '/' + msg_data['WK_Nr'] + '.json', JSON.stringify(msg_data) + "\n", {flag: 'a+'})
+    //     console.log(path.join(__dirname, 'Zeiten') + '/' + wettkampf + '/' + msg_data['WK_Nr'] + '.json')
+    // }
 }
 
 io.of("/admin").on("connection", function (socket) {
@@ -156,7 +125,6 @@ function log(message) {
 app.all('/', (req, res) => {
     let data = {}
     for (let wettkampf in wettkampfDaten) {
-        console.log(wettkampfDaten[wettkampf])
         data[wettkampf] = Object.keys(wettkampfDaten[wettkampf].data)
     }
     res.render(path.join(__dirname, "./public/views/anmelde.html"), {structure: JSON.stringify(data)});
@@ -180,7 +148,7 @@ app.all('/out', function (req, res) {
     if (params.wettkampf in wettkampfDaten) {
         if (params.wettkampf && !params.wk) {
             let wkStats = wettkampfDaten[params.wettkampf].wkStats
-            console.log(wkStats)
+
             res.render(path.join(__dirname, "./public/views/admin_output.html"), {
                 appcontent: htmlCreator.createWkSelectButtons(params.wettkampf, wkStats),
                 'headbar': params.wettkampf
@@ -188,6 +156,7 @@ app.all('/out', function (req, res) {
         }
         if (params.wettkampf && params.wk) {
             let wkData = wettkampfDaten[params.wettkampf].getWkNachLauf(params.wk)
+            // console.log(wkData[2])
             res.render(path.join(__dirname, "./public/views/admin_output.html"), {
                 appcontent: htmlCreator.createWkZeiten(wkData,params.wettkampf, params.wk),
                 'headbar': params.wettkampf + ' Wk:' + params.wk
@@ -268,13 +237,14 @@ app.post('/auth', function (request, response) {
 });
 
 app.all('/lane/', function (req, res) {
-    console.log('[INFO] get /lane data: ' + req.query)
+
     if (!req.session.logged_in || req.session.rolle !== 'kari' || !req.session.bahn) {
         res.redirect('/')
         return
     }
     if (req.query.wettkampf) {
         let start = returnNextHeat(req.session)['data']
+        log('[info] got time data: ' + start)
         res.render(path.join(__dirname, "./public/views/zeitNehmer.html"),{})//'currentData':start,'Wk-Nr':start['WK_Nr'], 'Wk-Name': start['WK_Titel'], 'Lauf': start['Lauf'], 'Schwimmer': start['Aktiver']});
     } else {
         res.send('Wettkampf nicht angegeben')
@@ -295,7 +265,7 @@ app.post('/postTime',(req,res)=>{
             let result = wettkampfDaten[req.session.wettkampf].addTime(data['data'], data['signature'])
             if (result === 1) {
                 let response = JSON.stringify(returnNextHeat(req.session))
-                //handleData(data, req.session.wettkampf)
+                handleData(data, req.session.wettkampf)
                 res.send(response)
             } else {
                 log('Sending: ' + result)

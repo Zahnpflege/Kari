@@ -22,6 +22,7 @@ class HTMLCreator{
     }
 
     static createWkZeiten(zeitData,wettkampf ,wk ){
+        // console.log('zeitData' + JSON.stringify(zeitData))
         let res = ''
 
         for(let lauf in zeitData){
